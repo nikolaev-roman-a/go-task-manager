@@ -87,9 +87,9 @@ func (s *TaskService) Run(ctx context.Context, task *models.Task) error {
 		s.logger.Info("task")
 		result, err := s.process(taskCtx, task)
 		if err != nil {
-			s.setTaskResult(ctx, task, []byte(err.Error()), models.StatusFailed)
+			s.setTaskResult(ctx, task, err.Error(), models.StatusFailed)
 		}
-		if result != nil {
+		if result != "" {
 			s.setTaskResult(ctx, task, result, models.StatusCompleted)
 		}
 	}()
@@ -98,12 +98,14 @@ func (s *TaskService) Run(ctx context.Context, task *models.Task) error {
 
 func (s *TaskService) setTaskRunning(ctx context.Context, task *models.Task) {
 	task.Status = models.StatusRunning
-	task.StartedAt = time.Now().UTC()
+	currentTime := time.Now().UTC()
+	task.StartedAt = &currentTime
 	s.Update(ctx, task)
 }
 
-func (s *TaskService) setTaskResult(ctx context.Context, task *models.Task, result []byte, status models.TaskStatus) {
-	task.FinishedAt = time.Now().UTC()
+func (s *TaskService) setTaskResult(ctx context.Context, task *models.Task, result string, status models.TaskStatus) {
+	currentTime := time.Now().UTC()
+	task.FinishedAt = &currentTime
 	task.Status = status
 	task.Result = result
 	s.Update(ctx, task)
@@ -132,8 +134,8 @@ func (s *TaskService) Cancel(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *TaskService) process(ctx context.Context, task *models.Task) ([]byte, error) {
-	duration := time.Duration(3+rand.Intn(3)) * time.Second
+func (s *TaskService) process(ctx context.Context, task *models.Task) (string, error) {
+	duration := time.Duration(10+rand.Intn(30)) * time.Second
 
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -151,12 +153,12 @@ func (s *TaskService) process(ctx context.Context, task *models.Task) ([]byte, e
 
 	select {
 	case <-ctx.Done():
-		return nil, nil
+		return "", nil
 	case <-time.After(duration):
 		if rand.Float32() < 0.1 {
-			return nil, errors.New("I/O operation failed")
+			return "", errors.New("I/O operation failed")
 		}
-		return []byte("Result"), nil
+		return "Result", nil
 	}
 }
 

@@ -17,12 +17,12 @@ const (
 )
 
 type Task struct {
-	ID         uuid.UUID
-	Status     TaskStatus
-	CreatedAt  time.Time
-	StartedAt  time.Time
-	FinishedAt time.Time
-	Result     []byte
+	ID         uuid.UUID  `json:"id"`
+	Status     TaskStatus `json:"status"`
+	CreatedAt  time.Time  `json:"created_at"`
+	StartedAt  *time.Time `json:"started_at,omitempty"`
+	FinishedAt *time.Time `json:"finished_at,omitempty"`
+	Result     string     `json:"result,omitempty"`
 }
 
 type ErrorResponse struct {
